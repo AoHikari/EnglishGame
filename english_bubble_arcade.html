@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>English Bubble Arcade - Made By Teacher Osvaldo</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            light: '#e0f2fe',
+                            DEFAULT: '#0284c7',
+                            dark: '#0369a1',
+                            accent: '#06b6d4',
+                            glow: '#38bdf8',
+                            purple: '#6366f1'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        game: ['Fredoka', 'cursive']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #0369a1 50%, #0284c7 100%);
+            min-height: 100vh;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        /* Screen Feedback Overlay */
+        #feedback-overlay {
+            pointer-events: none;
+            transition: opacity 0.15s ease-out;
+        }
+
+        .flash-correct {
+            background-color: rgba(34, 197, 94, 0.45) !important;
+            opacity: 1 !important;
+        }
+
+        .flash-wrong {
+            background-color: rgba(239, 68, 68, 0.45) !important;
+            opacity: 1 !important;
+        }
+
+        /* Screen Shake Animation */
+        @keyframes shake {
+            0%, 100% { transform: translate(0, 0); }
+            20% { transform: translate(-12px, 8px); }
+            40% { transform: translate(12px, -8px); }
+            60% { transform: translate(-8px, 4px); }
+            80% { transform: translate(8px, -4px); }
+        }
+
+        .shake-screen {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* Glassmorphism styling */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+        }
+
+        .glass-dark {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* Glowing text & button effects */
+        .text-glow {
+            text-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+        }
+
+        .btn-arcade {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.25);
+        }
+
+        .btn-arcade:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 0 rgba(0, 0, 0, 0.25);
+        }
+
+        .btn-arcade:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #0284c7;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="text-slate-800 flex flex-col min-h-screen overflow-x-hidden">
+
+    <!-- Fullscreen Feedback Flash Screen -->
+    <div id="feedback-overlay" class="fixed inset-0 z-50 opacity-0 transition-opacity"></div>
+
+    <!-- MAIN HEADER / NAVBAR -->
+    <header class="w-full glass-dark sticky top-0 z-40 px-4 py-3 border-b border-cyan-500/30">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-3">
+            
+            <!-- Brand Badge -->
+            <div class="flex items-center gap-3 cursor-pointer" onclick="showMainMenu()">
+                <div class="bg-gradient-to-tr from-cyan-400 to-blue-600 text-white p-2.5 rounded-2xl shadow-lg flex items-center justify-center text-xl font-bold">
+                    <i class="fa-solid fa-[#000] fa-wand-magic-sparkles text-cyan-200"></i>
+                </div>
+                <div>
+                    <h1 class="font-game text-xl md:text-2xl font-bold text-white tracking-wide">
+                        ENGLISH <span class="text-cyan-400">BUBBLE</span> ARCADE
+                    </h1>
+                    <p class="text-xs font-semibold text-cyan-300 tracking-wider uppercase flex items-center gap-1">
+                        <i class="fa-solid fa-award text-amber-400"></i> Made By Teacher Osvaldo
+                    </p>
+                </div>
+            </div>
+
+            <!-- Stats Bar -->
+            <div class="flex items-center gap-3 md:gap-6 bg-slate-900/80 px-4 py-1.5 rounded-2xl border border-cyan-500/20 text-white font-game text-sm md:text-base">
+                <div class="flex items-center gap-1.5" title="XP Acumulado">
+                    <i class="fa-solid fa-bolt text-amber-400 animate-bounce"></i>
+                    <span id="stat-xp" class="text-amber-300 font-bold">0</span> <span class="text-xs text-slate-400">XP</span>
+                </div>
+                <div class="w-px h-5 bg-slate-700"></div>
+                <div class="flex items-center gap-1.5" title="Puntaje Actual">
+                    <i class="fa-solid fa-star text-yellow-400"></i>
+                    <span id="stat-score" class="text-yellow-200 font-bold">0</span>
+                </div>
+                <div class="w-px h-5 bg-slate-700"></div>
+                <div class="flex items-center gap-1.5" title="Racha / Combo Multiplicador">
+                    <i class="fa-solid fa-fire text-orange-500"></i>
+                    <span id="stat-streak" class="text-orange-400 font-bold">0x</span>
+                </div>
+                <button id="audio-toggle-btn" onclick="toggleAudio()" class="ml-2 text-slate-300 hover:text-cyan-400 transition-colors p-1" title="Activar/Desactivar Sonido">
+                    <i id="audio-icon" class="fa-solid fa-volume-high text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-3 md:p-6 flex flex-col justify-center items-center relative z-10">
+        
+        <!-- MENU PRINCIPAL (MINIJUEGOS) -->
+        <section id="menu-screen" class="w-full max-w-5xl space-y-8 py-4">
+            
+            <!-- Hero Title -->
+            <div class="text-center space-y-3">
+                <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-500/20 border border-cyan-400/40 text-cyan-200 text-sm font-semibold backdrop-blur-md">
+                    <i class="fa-solid fa-graduation-cap text-cyan-300"></i>
+                    <span>Aprende Inglés Jugando • Secundaria</span>
+                </div>
+                <h2 class="text-3xl md:text-5xl font-game font-extrabold text-white text-glow">
+                    ¡Selecciona tu Modo de Juego!
+                </h2>
+                <p class="text-slate-200 max-w-xl mx-auto text-sm md:text-base">
+                    Trona las burbujas correctas, mantén tu racha de aciertos y demuestra tu dominio del idioma.
+                </p>
+            </div>
+
+            <!-- Grid de Minijuegos -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                
+                <!-- Game 1: Verbs Pop -->
+                <div onclick="startGame('verbs')" class="glass-card rounded-3xl p-6 cursor-pointer hover:border-cyan-400 transition-all duration-300 transform hover:-translate-y-2 flex flex-col justify-between group">
+                    <div class="space-y-4">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 text-white flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-circle-dot"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-cyan-600 uppercase tracking-widest">Minijuego 1</span>
+                            <h3 class="text-2xl font-game font-bold text-slate-800 group-hover:text-cyan-600 transition-colors">Tronador de Verbos</h3>
+                            <p class="text-slate-600 text-sm mt-2">
+                                Practica la traducción e infinitivos de más de 50 verbos clave en inglés. ¡Trona la opción correcta!
+                            </p>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex items-center justify-between text-xs font-bold text-cyan-600">
+                        <span>+50 Verbos • Ronda 60s</span>
+                        <span class="bg-cyan-100 px-3 py-1 rounded-full group-hover:bg-cyan-600 group-hover:text-white transition-colors">¡JUGAR! <i class="fa-solid fa-play ml-1"></i></span>
+                    </div>
+                </div>
+
+                <!-- Game 2: Regular vs Irregular Hunter -->
+                <div onclick="startGame('category')" class="glass-card rounded-3xl p-6 cursor-pointer hover:border-indigo-400 transition-all duration-300 transform hover:-translate-y-2 flex flex-col justify-between group">
+                    <div class="space-y-4">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 text-white flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-crosshairs"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-indigo-600 uppercase tracking-widest">Minijuego 2</span>
+                            <h3 class="text-2xl font-game font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">Cazador de Categorías</h3>
+                            <p class="text-slate-600 text-sm mt-2">
+                                Identifica rápido entre verbos Regulares e Irregulares. ¡Trona solo los que indique el objetivo!
+                            </p>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex items-center justify-between text-xs font-bold text-indigo-600">
+                        <span>Gramática • Agilidad</span>
+                        <span class="bg-indigo-100 px-3 py-1 rounded-full group-hover:bg-indigo-600 group-hover:text-white transition-colors">¡JUGAR! <i class="fa-solid fa-play ml-1"></i></span>
+                    </div>
+                </div>
+
+                <!-- Game 3: Sentence Builder -->
+                <div onclick="startGame('sentence')" class="glass-card rounded-3xl p-6 cursor-pointer hover:border-emerald-400 transition-all duration-300 transform hover:-translate-y-2 flex flex-col justify-between group">
+                    <div class="space-y-4">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-600 text-white flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-cubes-stacked"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-emerald-600 uppercase tracking-widest">Minijuego 3</span>
+                            <h3 class="text-2xl font-game font-bold text-slate-800 group-hover:text-emerald-600 transition-colors">Constructor de Oraciones</h3>
+                            <p class="text-slate-600 text-sm mt-2">
+                                Ordena las palabras de las burbujas en la secuencia gramatical correcta para armar la oración.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex items-center justify-between text-xs font-bold text-emerald-600">
+                        <span>Estructura • Sintaxis</span>
+                        <span class="bg-emerald-100 px-3 py-1 rounded-full group-hover:bg-emerald-600 group-hover:text-white transition-colors">¡JUGAR! <i class="fa-solid fa-play ml-1"></i></span>
+                    </div>
+                </div>
+
+                <!-- Game 4: Verb To Be & Continuous -->
+                <div onclick="startGame('tobe')" class="glass-card rounded-3xl p-6 cursor-pointer hover:border-sky-400 transition-all duration-300 transform hover:-translate-y-2 flex flex-col justify-between group">
+                    <div class="space-y-4">
+                        <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-sky-400 to-blue-600 text-white flex items-center justify-center text-2xl shadow-lg group-hover:scale-110 transition-transform">
+                            <i class="fa-solid fa-bolt-lightning"></i>
+                        </div>
+                        <div>
+                            <span class="text-xs font-bold text-sky-600 uppercase tracking-widest">Minijuego 4</span>
+                            <h3 class="text-2xl font-game font-bold text-slate-800 group-hover:text-sky-600 transition-colors">To Be & Tiempos Continuos</h3>
+                            <p class="text-slate-600 text-sm mt-2">
+                                Completa el auxiliar adecuado (Am, Is, Are, Was, Were) para oraciones en Presente y Pasado Continuo.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="mt-6 flex items-center justify-between text-xs font-bold text-sky-600">
+                        <span>Am/Is/Are • Was/Were</span>
+                        <span class="bg-sky-100 px-3 py-1 rounded-full group-hover:bg-sky-600 group-hover:text-white transition-colors">¡JUGAR! <i class="fa-solid fa-play ml-1"></i></span>
+                    </div>
+                </div>
+
+                <!-- Game 5: Speed Blitz Arcade 60s -->
+                <div onclick="startGame('speed')" class="glass-card rounded-3xl p-6 cursor-pointer hover:border-amber-400 transition-all duration-300 transform hover:-translate-y-2 flex flex-col justify-between group md:col-span-2 lg:col-span-2">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-amber-400 to-red-500 text-white flex items-center justify-center text-3xl shadow-lg group-hover:rotate-12 transition-transform">
+                                <i class="fa-solid fa-stopwatch"></i>
+                            </div>
+                            <div>
+                                <span class="text-xs font-bold text-amber-600 uppercase tracking-widest">Minijuego 5 • Modo Especial</span>
+                                <h3 class="text-2xl font-game font-bold text-slate-800 group-hover:text-amber-600 transition-colors">Tormenta Relámpago 60s</h3>
+                                <p class="text-slate-600 text-sm mt-1">
+                                    ¡Supervivencia total! 60 segundos de lluvia ininterrumpida de burbujas. ¿Cuántas podrás acertar?
+                                </p>
+                            </div>
+                        </div>
+                        <span class="bg-amber-500 text-white font-game text-sm px-5 py-2.5 rounded-2xl shadow-md group-hover:bg-amber-600 transition-colors flex-shrink-0">
+                            ¡DESAFÍO 60S! <i class="fa-solid fa-fire ml-1"></i>
+                        </span>
+                    </div>
+                </div>
+
+            </div>
+            
+            <!-- Teacher Osvaldo Footer Note -->
+            <div class="text-center pt-4">
+                <p class="text-xs text-cyan-200/70 font-semibold tracking-wider">
+                    DISEÑADO CON PASIÓN PARA LA ENSEÑANZA DEL INGLÉS • MADE BY TEACHER OSVALDO
+                </p>
+            </div>
+        </section>
+
+        <!-- GAME PLAY ARENA (HIDDEN BY DEFAULT) -->
+        <section id="game-screen" class="hidden w-full max-w-4xl flex flex-col gap-4">
+            
+            <!-- Top HUD & Target Display -->
+            <div class="glass-card rounded-3xl p-4 md:p-6 shadow-2xl flex flex-col gap-3 relative overflow-hidden">
+                
+                <!-- Game Header Controls -->
+                <div class="flex justify-between items-center text-sm font-game">
+                    <button onclick="showMainMenu()" class="px-3.5 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold transition-colors flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-left"></i> Menú
+                    </button>
+                    <div id="game-mode-badge" class="px-4 py-1.5 rounded-full bg-cyan-500 text-white font-bold tracking-wide shadow-md">
+                        TRONADOR DE VERBOS
+                    </div>
+                    <div class="text-right">
+                        <span class="text-slate-500 text-xs block">TIEMPO</span>
+                        <span id="timer-text" class="text-2xl font-black text-cyan-600">30s</span>
+                    </div>
+                </div>
+
+                <!-- Progress Timer Bar -->
+                <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden p-0.5 border border-slate-300">
+                    <div id="timer-bar" class="bg-gradient-to-r from-cyan-400 via-blue-500 to-indigo-600 h-full rounded-full transition-all duration-100" style="width: 100%;"></div>
+                </div>
+
+                <!-- Interactive Question / Target Card -->
+                <div class="bg-gradient-to-r from-slate-900 via-blue-950 to-slate-900 rounded-2xl p-4 md:p-5 text-white shadow-inner flex flex-col md:flex-row items-center justify-between gap-4 border border-cyan-500/30">
+                    <div class="space-y-1 text-center md:text-left flex-grow">
+                        <p id="target-subtitle" class="text-xs uppercase tracking-widest text-cyan-300 font-bold">
+                            TRADUCE EL SIGUIENTE VERBO:
+                        </p>
+                        <div class="flex items-center justify-center md:justify-start gap-3">
+                            <h3 id="target-prompt" class="text-2xl md:text-4xl font-game font-black text-amber-300 tracking-wide">
+                                Correr
+                            </h3>
+                            <button id="tts-btn" onclick="speakCurrentPrompt()" class="bg-cyan-500/30 hover:bg-cyan-500 text-cyan-200 hover:text-white p-2 rounded-xl transition-all" title="Escuchar pronunciación en inglés">
+                                <i class="fa-solid fa-volume-high text-lg"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Sentence Builder Drop Area / Word slots -->
+                    <div id="sentence-slot-container" class="hidden flex-wrap justify-center gap-2 p-2 bg-slate-800/80 rounded-xl border border-cyan-400/30 min-h-[50px] min-w-[250px] items-center">
+                        <!-- Filled dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Canvas Bubble Arena -->
+            <div class="relative w-full aspect-[4/3] md:aspect-[16/9] max-h-[550px] rounded-3xl overflow-hidden glass-card shadow-2xl border-4 border-white/50">
+                <canvas id="bubble-canvas" class="w-full h-full cursor-pointer block"></canvas>
+                
+                <!-- Floating Canvas Instructions Overlay (fades out) -->
+                <div id="canvas-hint" class="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-slate-900/80 backdrop-blur-md text-cyan-300 px-4 py-2 rounded-full text-xs font-semibold border border-cyan-400/40 pointer-events-none flex items-center gap-2 animate-pulse">
+                    <i class="fa-solid fa-hand-pointer"></i> Haz clic o toca las burbujas flotantes para tronarlas
+                </div>
+            </div>
+
+        </section>
+
+        <!-- VICTORY / RESULTS MODAL -->
+        <div id="victory-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <div class="glass-card max-w-md w-full rounded-3xl p-6 md:p-8 text-center space-y-6 shadow-2xl border-2 border-cyan-400 transform transition-all scale-95 animate-in fade-in zoom-in duration-300">
+                
+                <!-- Badge Icon -->
+                <div class="relative inline-block">
+                    <div class="w-24 h-24 mx-auto rounded-3xl bg-gradient-to-tr from-amber-400 via-cyan-400 to-blue-600 text-white flex items-center justify-center text-5xl shadow-2xl">
+                        <i class="fa-solid fa-trophy text-amber-300 animate-bounce"></i>
+                    </div>
+                    <span class="absolute -bottom-2 -right-2 bg-purple-600 text-white font-game text-xs font-bold px-3 py-1 rounded-full shadow border-2 border-white">
+                        +<span id="res-xp-gained">150</span> XP
+                    </span>
+                </div>
+
+                <div class="space-y-2">
+                    <h2 class="text-3xl font-game font-black text-slate-800">¡NIVEL COMPLETADO!</h2>
+                    <p class="text-sm font-semibold text-cyan-600 uppercase tracking-widest flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-award text-amber-500"></i> Made By Teacher Osvaldo
+                    </p>
+                </div>
+
+                <!-- Stats summary card -->
+                <div class="bg-slate-100 rounded-2xl p-4 grid grid-cols-2 gap-4 text-slate-700 font-game">
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+                        <span class="text-xs text-slate-400 block uppercase">Puntaje Final</span>
+                        <span id="res-score" class="text-2xl font-black text-cyan-600">1,250</span>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+                        <span class="text-xs text-slate-400 block uppercase">Mejor Racha</span>
+                        <span id="res-streak" class="text-2xl font-black text-orange-500">5x</span>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-3">
+                    <button onclick="restartCurrentGame()" class="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-cyan-500 to-blue-600 text-white font-game font-bold text-lg btn-arcade shadow-lg">
+                        <i class="fa-solid fa-rotate-right mr-2"></i> JUGAR DE NUEVO
+                    </button>
+                    <button onclick="showMainMenu()" class="w-full py-3 px-6 rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-700 font-game font-bold transition-colors">
+                        <i class="fa-solid fa-house mr-2"></i> MENÚ PRINCIPAL
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="w-full glass-dark py-4 text-center text-xs text-slate-300 border-t border-cyan-500/20 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <p class="font-semibold text-cyan-200">
+                Made By Teacher Osvaldo • Interactive English Games for High School
+            </p>
+            <p class="text-slate-400">
+                © 2026 All Rights Reserved • Powered by HTML5 Canvas & WebAudio API
+            </p>
+        </div>
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // Web Audio API Synthesizer for retro arcade sound effects
+        class SoundFX {
+            constructor() {
+                this.ctx = null;
+                this.enabled = true;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) this.ctx = new AudioCtx();
+                }
+                if (this.ctx && this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            }
+
+            playPop() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+
+                osc.frequency.setValueAtTime(600, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(150, this.ctx.currentTime + 0.08);
+
+                gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.08);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.08);
+            }
+
+            playCorrect() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const now = this.ctx.currentTime;
+                const notes = [523.25, 659.25, 783.99]; // C5, E5, G5
+                notes.forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+
+                    gain.gain.setValueAtTime(0.2, now + i * 0.07);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.07 + 0.25);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now + i * 0.07);
+                    osc.stop(now + i * 0.07 + 0.25);
+                });
+            }
+
+            playWrong() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+
+                osc.frequency.setValueAtTime(220, now);
+                osc.frequency.linearRampToValueAtTime(110, now + 0.3);
+
+                gain.gain.setValueAtTime(0.25, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                osc.start(now);
+                osc.stop(now + 0.3);
+            }
+
+            playVictory() {
+                if (!this.enabled) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const now = this.ctx.currentTime;
+                const arpeggio = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                arpeggio.forEach((freq, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.value = freq;
+
+                    gain.gain.setValueAtTime(0.25, now + i * 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.4);
+
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+
+                    osc.start(now + i * 0.1);
+                    osc.stop(now + i * 0.1 + 0.4);
+                });
+            }
+        }
+
+        const audioFX = new SoundFX();
+
+        function toggleAudio() {
+            audioFX.enabled = !audioFX.enabled;
+            const icon = document.getElementById('audio-icon');
+            if (audioFX.enabled) {
+                icon.className = 'fa-solid fa-volume-high text-lg';
+            } else {
+                icon.className = 'fa-solid fa-volume-xmark text-lg text-slate-500';
+            }
+        }
+
+        // Comprehensive Verbs Database for High School English (>50 Verbs)
+        const VERBS_DATABASE = [
+            { es: "Correr", en: "Run", past: "Ran", category: "Irregular" },
+            { es: "Comer", en: "Eat", past: "Ate", category: "Irregular" },
+            { es: "Escribir", en: "Write", past: "Wrote", category: "Irregular" },
+            { es: "Jugar", en: "Play", past: "Played", category: "Regular" },
+            { es: "Saltar", en: "Jump", past: "Jumped", category: "Regular" },
+            { es: "Cocinar", en: "Cook", past: "Cooked", category: "Regular" },
+            { es: "Caminar", en: "Walk", past: "Walked", category: "Regular" },
+            { es: "Hablar", en: "Speak", past: "Spoke", category: "Irregular" },
+            { es: "Leer", en: "Read", past: "Read", category: "Irregular" },
+            { es: "Bailar", en: "Dance", past: "Danced", category: "Regular" },
+            { es: "Cantar", en: "Sing", past: "Sang", category: "Irregular" },
+            { es: "Dormir", en: "Sleep", past: "Slept", category: "Irregular" },
+            { es: "Nadar", en: "Swim", past: "Swam", category: "Irregular" },
+            { es: "Estudiar", en: "Study", past: "Studied", category: "Regular" },
+            { es: "Trabajar", en: "Work", past: "Worked", category: "Regular" },
+            { es: "Comprar", en: "Buy", past: "Bought", category: "Irregular" },
+            { es: "Vender", en: "Sell", past: "Sold", category: "Irregular" },
+            { es: "Manejar / Conducir", en: "Drive", past: "Drove", category: "Irregular" },
+            { es: "Volar", en: "Fly", past: "Flew", category: "Irregular" },
+            { es: "Limpiar", en: "Clean", past: "Cleaned", category: "Regular" },
+            { es: "Lavar", en: "Wash", past: "Washed", category: "Regular" },
+            { es: "Escuchar", en: "Listen", past: "Listened", category: "Regular" },
+            { es: "Ver (TV/Pelicula)", en: "Watch", past: "Watched", category: "Regular" },
+            { es: "Ver (Lugar/Objeto)", en: "See", past: "Saw", category: "Irregular" },
+            { es: "Hacer (Tarea/Actividad)", en: "Do", past: "Did", category: "Irregular" },
+            { es: "Hacer (Crear/Fabricar)", en: "Make", past: "Made", category: "Irregular" },
+            { es: "Ir", en: "Go", past: "Went", category: "Irregular" },
+            { es: "Venir", en: "Come", past: "Came", category: "Irregular" },
+            { es: "Tener", en: "Have", past: "Had", category: "Irregular" },
+            { es: "Pensar", en: "Think", past: "Thought", category: "Irregular" },
+            { es: "Encontrar", en: "Find", past: "Found", category: "Irregular" },
+            { es: "Dar", en: "Give", past: "Gave", category: "Irregular" },
+            { es: "Tomar / Llevar", en: "Take", past: "Took", category: "Irregular" },
+            { es: "Ayudar", en: "Help", past: "Helped", category: "Regular" },
+            { es: "Abrir", en: "Open", past: "Opened", category: "Regular" },
+            { es: "Cerrar", en: "Close", past: "Closed", category: "Regular" },
+            { es: "Pintar", en: "Paint", past: "Painted", category: "Regular" },
+            { es: "Llamar", en: "Call", past: "Called", category: "Regular" },
+            { es: "Preguntar", en: "Ask", past: "Asked", category: "Regular" },
+            { es: "Contestar", en: "Answer", past: "Answered", category: "Regular" },
+            { es: "Aprender", en: "Learn", past: "Learned", category: "Regular" },
+            { es: "Enseñar", en: "Teach", past: "Taught", category: "Irregular" },
+            { es: "Romper", en: "Break", past: "Broke", category: "Irregular" },
+            { es: "Beber", en: "Drink", past: "Drank", category: "Irregular" },
+            { es: "Olvidar", en: "Forget", past: "Forgot", category: "Irregular" },
+            { es: "Conocer / Encontrarse", en: "Meet", past: "Met", category: "Irregular" },
+            { es: "Pagar", en: "Pay", past: "Paid", category: "Irregular" },
+            { es: "Decir", en: "Say", past: "Said", category: "Irregular" },
+            { es: "Entender", en: "Understand", past: "Understood", category: "Irregular" },
+            { es: "Ganar", en: "Win", past: "Won", category: "Irregular" },
+            { es: "Visitar", en: "Visit", past: "Visited", category: "Regular" },
+            { es: "Esperar", en: "Wait", past: "Waited", category: "Regular text-xs" }
+        ];
+
+        // Sentences Database for Builder Mode
+        const SENTENCES_DATABASE = [
+            { es: "Ellos están jugando fútbol", en: ["They", "are", "playing", "soccer"] },
+            { es: "Ella está leyendo un libro", en: ["She", "is", "reading", "a", "book"] },
+            { es: "Yo estaba estudiando ayer", en: ["I", "was", "studying", "yesterday"] },
+            { es: "Nosotros estamos comiendo pizza", en: ["We", "are", "eating", "pizza"] },
+            { es: "Él jugará mañana", en: ["He", "will", "play", "tomorrow"] },
+            { es: "Ellos eran mis amigos", en: ["They", "were", "my", "friends"] },
+            { es: "Ella está cantando una canción", en: ["She", "is", "singing", "a", "song"] },
+            { es: "Yo soy un estudiante", en: ["I", "am", "a", "student"] },
+            { es: "Tú estás corriendo rápido", en: ["You", "are", "running", "fast"] },
+            { es: "Nosotros estábamos viendo TV", en: ["We", "were", "watching", "TV"] }
+        ];
+
+        // To Be & Continuous Database
+        const TOBE_DATABASE = [
+            { prompt: "She ___ reading a book right now.", correct: "is", options: ["is", "are", "am", "were"] },
+            { prompt: "They ___ watching TV yesterday at 5 PM.", correct: "were", options: ["were", "was", "are", "is"] },
+            { prompt: "I ___ studying English at the moment.", correct: "am", options: ["am", "is", "are", "was"] },
+            { prompt: "We ___ playing basketball last night.", correct: "were", options: ["were", "are", "is", "was"] },
+            { prompt: "He ___ sleeping when I called him.", correct: "was", options: ["was", "were", "is", "are"] },
+            { prompt: "Look! The dog ___ running fast.", correct: "is", options: ["is", "am", "are", "was"] },
+            { prompt: "You ___ cooking dinner right now.", correct: "are", options: ["are", "is", "am", "was"] },
+            { prompt: "It ___ raining heavily yesterday.", correct: "was", options: ["was", "were", "are", "am"] }
+        ];
+
+        // Global Game State
+        let currentMode = 'verbs'; // 'verbs', 'category', 'sentence', 'tobe', 'speed'
+        let score = 0;
+        let streak = 0;
+        let xp = 0;
+        let timerSeconds = 30;
+        let timerInterval = null;
+        let currentPromptData = null;
+        let currentTTSWord = "";
+        let sentenceBuildIndex = 0;
+
+        // Canvas & Animation variables
+        const canvas = document.getElementById('bubble-canvas');
+        const ctx = canvas.getContext('2d');
+        let bubbles = [];
+        let particles = [];
+        let animationFrameId = null;
+
+        // Text To Speech
+        function speakCurrentPrompt() {
+            if (!currentTTSWord) return;
+            try {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(currentTTSWord);
+                utterance.lang = 'en-US';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {
+                console.log("TTS Error: ", e);
+            }
+        }
+
+        // Canvas Resize & Setup
+        function resizeCanvas() {
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * window.devicePixelRatio || rect.width;
+            canvas.height = rect.height * window.devicePixelRatio || rect.height;
+            ctx.scale(window.devicePixelRatio || 1, window.devicePixelRatio || 1);
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        // Bubble Class with Physics & Gradient visuals
+        class Bubble {
+            constructor(text, isCorrect, x, y, radius) {
+                this.text = text;
+                this.isCorrect = isCorrect;
+                this.radius = radius || (window.innerWidth < 640 ? 38 : 48);
+                this.x = x || Math.random() * (canvas.clientWidth - this.radius * 2) + this.radius;
+                this.y = y || canvas.clientHeight + this.radius + Math.random() * 50;
+                
+                // Floating Velocity
+                this.vx = (Math.random() - 0.5) * 1.5;
+                this.vy = - (Math.random() * 1.2 + 0.8);
+                
+                // Color Gradients
+                const colors = [
+                    { inner: '#38bdf8', outer: '#0284c7' }, // Cyan/Blue
+                    { inner: '#818cf8', outer: '#4f46e5' }, // Indigo
+                    { inner: '#34d399', outer: '#059669' }, // Emerald
+                    { inner: '#f472b6', outer: '#db2777' }, // Pink
+                    { inner: '#fbbf24', outer: '#d97706' }  // Amber
+                ];
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.pulse = Math.random() * Math.PI;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.pulse += 0.04;
+
+                // Bounce horizontally off walls
+                if (this.x - this.radius <= 0 || this.x + this.radius >= canvas.clientWidth) {
+                    this.vx *= -1;
+                }
+
+                // If bubble reaches top border, respawn at bottom
+                if (this.y + this.radius < -10) {
+                    this.y = canvas.clientHeight + this.radius + 10;
+                    this.x = Math.random() * (canvas.clientWidth - this.radius * 2) + this.radius;
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.beginPath();
+                
+                // Subtle scale pulsing
+                const currentRadius = this.radius + Math.sin(this.pulse) * 2;
+                
+                // Radial Gradient for shiny 3D bubble effect
+                const grad = ctx.createRadialGradient(
+                    this.x - currentRadius * 0.3, 
+                    this.y - currentRadius * 0.3, 
+                    currentRadius * 0.1, 
+                    this.x, 
+                    this.y, 
+                    currentRadius
+                );
+                grad.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+                grad.addColorStop(0.3, this.color.inner);
+                grad.addColorStop(1, this.color.outer);
+
+                ctx.fillStyle = grad;
+                ctx.arc(this.x, this.y, currentRadius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Shiny specular highlight specular arc
+                ctx.beginPath();
+                ctx.arc(this.x - currentRadius * 0.35, this.y - currentRadius * 0.35, currentRadius * 0.3, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+                ctx.fill();
+
+                // Bubble Outline
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+                ctx.stroke();
+
+                // Text Label inside Bubble
+                ctx.fillStyle = '#ffffff';
+                ctx.font = `bold ${window.innerWidth < 640 ? '14px' : '17px'} Fredoka, sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+                ctx.shadowBlur = 4;
+                ctx.fillText(this.text, this.x, this.y);
+
+                ctx.restore();
+            }
+
+            isHit(px, py) {
+                const dist = Math.hypot(this.x - px, this.y - py);
+                return dist <= this.radius + 10;
+            }
+        }
+
+        // Particle Class for Bubble Explosions
+        class Particle {
+            constructor(x, y, color) {
+                this.x = x;
+                this.y = y;
+                this.radius = Math.random() * 5 + 2;
+                this.vx = (Math.random() - 0.5) * 8;
+                this.vy = (Math.random() - 0.5) * 8;
+                this.alpha = 1;
+                this.color = color;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= 0.03;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function createExplosion(x, y, color) {
+            for (let i = 0; i < 18; i++) {
+                particles.push(new Particle(x, y, color));
+            }
+        }
+
+        // Canvas Render Loop
+        function animateCanvas() {
+            ctx.clearRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+
+            // Update & Draw Bubbles
+            bubbles.forEach(bubble => {
+                bubble.update();
+                bubble.draw();
+            });
+
+            // Update & Draw Particles
+            for (let i = particles.length - 1; i >= 0; i--) {
+                particles[i].update();
+                particles[i].draw();
+                if (particles[i].alpha <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+
+            animationFrameId = requestAnimationFrame(animateCanvas);
+        }
+
+        // Screen Feedback Flash & Shake
+        function triggerFeedback(isCorrect) {
+            const overlay = document.getElementById('feedback-overlay');
+            const body = document.body;
+
+            if (isCorrect) {
+                audioFX.playCorrect();
+                overlay.className = "fixed inset-0 z-50 transition-opacity duration-150 flash-correct";
+            } else {
+                audioFX.playWrong();
+                overlay.className = "fixed inset-0 z-50 transition-opacity duration-150 flash-wrong";
+                body.classList.add('shake-screen');
+                setTimeout(() => body.classList.remove('shake-screen'), 400);
+            }
+
+            setTimeout(() => {
+                overlay.className = "fixed inset-0 z-50 opacity-0 transition-opacity";
+            }, 300);
+        }
+
+        // Start Game Handler
+        function startGame(mode) {
+            currentMode = mode;
+            score = 0;
+            streak = 0;
+            updateStatsUI();
+
+            document.getElementById('menu-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('victory-modal').classList.add('hidden');
+
+            resizeCanvas();
+            if (!animationFrameId) animateCanvas();
+
+            // Iniciar temporizador global de 60 segundos por ronda
+            startTimer(60);
+
+            loadNextRound();
+        }
+
+        function showMainMenu() {
+            clearInterval(timerInterval);
+            document.getElementById('menu-screen').classList.remove('hidden');
+            document.getElementById('game-screen').classList.add('hidden');
+            document.getElementById('victory-modal').classList.add('hidden');
+        }
+
+        function restartCurrentGame() {
+            startGame(currentMode);
+        }
+
+        function updateStatsUI() {
+            document.getElementById('stat-score').textContent = score.toLocaleString();
+            document.getElementById('stat-streak').textContent = streak + "x";
+            document.getElementById('stat-xp').textContent = xp;
+        }
+
+        // Timer Logic per round
+        function startTimer(seconds) {
+            clearInterval(timerInterval);
+            timerSeconds = seconds;
+            
+            const timerText = document.getElementById('timer-text');
+            const timerBar = document.getElementById('timer-bar');
+            
+            timerText.textContent = `${timerSeconds}s`;
+            timerBar.style.width = '100%';
+
+            const total = seconds;
+            timerInterval = setInterval(() => {
+                timerSeconds--;
+                timerText.textContent = `${timerSeconds}s`;
+                
+                const percent = (timerSeconds / total) * 100;
+                timerBar.style.width = `${percent}%`;
+
+                if (timerSeconds <= 0) {
+                    clearInterval(timerInterval);
+                    handleRoundEnd();
+                }
+            }, 1000);
+        }
+
+        function handleRoundEnd() {
+            triggerFeedback(false);
+            showVictoryModal();
+        }
+
+        // Load Next Question during the round
+        function loadNextRound() {
+            bubbles = [];
+            sentenceBuildIndex = 0;
+            const slotContainer = document.getElementById('sentence-slot-container');
+            slotContainer.classList.add('hidden');
+            slotContainer.innerHTML = '';
+
+            const badge = document.getElementById('game-mode-badge');
+            const subtitle = document.getElementById('target-subtitle');
+            const prompt = document.getElementById('target-prompt');
+
+            if (currentMode === 'verbs') {
+                badge.textContent = "TRONADOR DE VERBOS";
+                subtitle.textContent = "TRADUCE EL SIGUIENTE VERBO EN ESPAÑOL:";
+
+                const randVerb = VERBS_DATABASE[Math.floor(Math.random() * VERBS_DATABASE.length)];
+                currentPromptData = randVerb;
+                prompt.textContent = randVerb.es;
+                currentTTSWord = randVerb.en;
+
+                const options = [randVerb.en];
+                while (options.length < 4) {
+                    const distractor = VERBS_DATABASE[Math.floor(Math.random() * VERBS_DATABASE.length)].en;
+                    if (!options.includes(distractor)) options.push(distractor);
+                }
+                options.sort(() => Math.random() - 0.5);
+
+                options.forEach(opt => {
+                    bubbles.push(new Bubble(opt, opt === randVerb.en));
+                });
+
+            } else if (currentMode === 'category') {
+                badge.textContent = "CAZADOR DE CATEGORÍAS";
+                const targetCategory = Math.random() > 0.5 ? "Regular" : "Irregular";
+                currentPromptData = { category: targetCategory };
+                subtitle.textContent = "OBJETIVO GRAMATICAL:";
+                prompt.textContent = `¡Trona los verbos ${targetCategory.toUpperCase()}ES!`;
+                currentTTSWord = targetCategory === "Regular" ? "Regular Verbs" : "Irregular Verbs";
+
+                const matchingVerbs = VERBS_DATABASE.filter(v => v.category === targetCategory);
+                const otherVerbs = VERBS_DATABASE.filter(v => v.category !== targetCategory);
+
+                const correctPick = matchingVerbs[Math.floor(Math.random() * matchingVerbs.length)];
+                bubbles.push(new Bubble(correctPick.en, true));
+
+                for (let i = 0; i < 3; i++) {
+                    const wrongPick = otherVerbs[Math.floor(Math.random() * otherVerbs.length)];
+                    bubbles.push(new Bubble(wrongPick.en, false));
+                }
+                bubbles.sort(() => Math.random() - 0.5);
+
+            } else if (currentMode === 'sentence') {
+                badge.textContent = "CONSTRUCTOR DE ORACIONES";
+                subtitle.textContent = "ARMA LA ORACIÓN EN EL ORDEN CORRECTO:";
+
+                const sentenceData = SENTENCES_DATABASE[Math.floor(Math.random() * SENTENCES_DATABASE.length)];
+                currentPromptData = sentenceData;
+                prompt.textContent = sentenceData.es;
+                currentTTSWord = sentenceData.en.join(' ');
+
+                slotContainer.classList.remove('hidden');
+                sentenceData.en.forEach((_, idx) => {
+                    const slot = document.createElement('div');
+                    slot.className = "px-3 py-1 bg-slate-700 text-slate-400 font-game rounded-lg border border-dashed border-cyan-400/50 text-sm font-bold min-w-[50px] text-center";
+                    slot.textContent = `_${idx + 1}_`;
+                    slot.id = `slot-${idx}`;
+                    slotContainer.appendChild(slot);
+                });
+
+                const wordList = [...sentenceData.en].sort(() => Math.random() - 0.5);
+                wordList.forEach(w => {
+                    bubbles.push(new Bubble(w, false));
+                });
+
+            } else if (currentMode === 'tobe') {
+                badge.textContent = "TO BE & TIEMPOS CONTINUOS";
+                subtitle.textContent = "COMPLETA CON EL AUXILIAR CORRECTO:";
+
+                const item = TOBE_DATABASE[Math.floor(Math.random() * TOBE_DATABASE.length)];
+                currentPromptData = item;
+                prompt.textContent = item.prompt;
+                currentTTSWord = item.correct;
+
+                item.options.forEach(opt => {
+                    bubbles.push(new Bubble(opt, opt === item.correct));
+                });
+
+            } else if (currentMode === 'speed') {
+                badge.textContent = "TORMENTA RELÁMPAGO 60S";
+                subtitle.textContent = "¡TRONA TODAS LAS TRADUCCIONES CORRECTAS!";
+
+                const randVerb = VERBS_DATABASE[Math.floor(Math.random() * VERBS_DATABASE.length)];
+                currentPromptData = randVerb;
+                prompt.textContent = `${randVerb.es} = ?`;
+                currentTTSWord = randVerb.en;
+
+                const options = [randVerb.en];
+                while (options.length < 5) {
+                    const distractor = VERBS_DATABASE[Math.floor(Math.random() * VERBS_DATABASE.length)].en;
+                    if (!options.includes(distractor)) options.push(distractor);
+                }
+                options.sort(() => Math.random() - 0.5);
+
+                options.forEach(opt => {
+                    bubbles.push(new Bubble(opt, opt === randVerb.en));
+                });
+            }
+
+            // Reproduce pronunciación del nuevo objetivo
+            speakCurrentPrompt();
+        }
+
+        // Canvas Interaction (Pop Bubbles)
+        function handleCanvasTap(e) {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches ? e.touches[0] : e;
+            const clickX = touch.clientX - rect.left;
+            const clickY = touch.clientY - rect.top;
+
+            for (let i = bubbles.length - 1; i >= 0; i--) {
+                const b = bubbles[i];
+                if (b.isHit(clickX, clickY)) {
+                    audioFX.playPop();
+                    createExplosion(b.x, b.y, b.color.inner);
+
+                    if (currentMode === 'sentence') {
+                        const targetSentence = currentPromptData.en;
+                        const expectedWord = targetSentence[sentenceBuildIndex];
+
+                        if (b.text === expectedWord) {
+                            const slot = document.getElementById(`slot-${sentenceBuildIndex}`);
+                            if (slot) {
+                                slot.textContent = b.text;
+                                slot.className = "px-3 py-1 bg-cyan-500 text-white font-game rounded-lg font-bold text-sm shadow animate-bounce";
+                            }
+                            bubbles.splice(i, 1);
+                            sentenceBuildIndex++;
+
+                            if (sentenceBuildIndex >= targetSentence.length) {
+                                triggerFeedback(true);
+                                score += 150 + streak * 20;
+                                streak++;
+                                xp += 25;
+                                updateStatsUI();
+                                setTimeout(loadNextRound, 400);
+                            }
+                        } else {
+                            triggerFeedback(false);
+                            streak = 0;
+                            updateStatsUI();
+                        }
+
+                    } else {
+                        // Single choice modes
+                        if (b.isCorrect) {
+                            triggerFeedback(true);
+                            score += 100 + streak * 15;
+                            streak++;
+                            xp += 15;
+                            updateStatsUI();
+
+                            // Carga inmediata de la siguiente palabra manteniendo el reloj corriendo
+                            setTimeout(loadNextRound, 350);
+                        } else {
+                            triggerFeedback(false);
+                            streak = 0;
+                            updateStatsUI();
+                            bubbles.splice(i, 1);
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        canvas.addEventListener('click', handleCanvasTap);
+        canvas.addEventListener('touchstart', handleCanvasTap, { passive: false });
+
+        function showVictoryModal() {
+            clearInterval(timerInterval);
+            audioFX.playVictory();
+
+            document.getElementById('res-score').textContent = score.toLocaleString();
+            document.getElementById('res-streak').textContent = streak + "x";
+            document.getElementById('res-xp-gained').textContent = xp;
+
+            document.getElementById('victory-modal').classList.remove('hidden');
+        }
+
+        // Initialize Canvas Sizing on load
+        window.onload = function() {
+            resizeCanvas();
+        };
+    </script>
+</body>
+</html>
